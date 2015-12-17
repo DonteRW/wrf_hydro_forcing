@@ -2,6 +2,9 @@
 # wrf_hydro_forcing_param
 #
 
+# ********************************************************************
+# **NOTE: This version is to be employed for testing on Yellowstone.**
+# ********************************************************************
 # This is a Python config file used by the WRF-Hydro_forcing.py script. 
 # WRF-Hydro_forcing.py is the forcing engine that encompasses the work 
 # flow for WRF-Hydro and acts as a wrapper to the various regridding and
@@ -34,13 +37,13 @@ forcing_engine_log_level=DEBUG
 
 [default_env_vars]
 # Probably only relevant for NCAR
-ncarg_root = /opt/ncl
+#ncarg_root = /opt/ncl
 # Use 6.3.0 so the grib tables are up-to-date for reading MRMS
-#ncarg_root = /opt/ncl-6.3.0
+ncarg_root = /glade/apps/opt/ncl/6.3.0/intel/12.1.5
 
 # Set the NCL_DEF_LIB_DIR environment variable where all the
 # shared objects reside
-# For example:
+#glade/apps/opt/ncl/6.3.0/intel/12.1.5 For example:
 #    setenv NCL_DEF_LIB_DIR /home/hydro/shared_objects
 # In your NCL script (ie adj_topo.ncl), call the shared
 # object just like a built-in NCL function, no need to load
@@ -48,7 +51,7 @@ ncarg_root = /opt/ncl
 # call func or procedures by preceding with two colons + 
 # the name of the shared object.
 
-ncl_def_lib_dir = /home/minnawin/IOC/ncl_shared_objs
+ncl_def_lib_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/shared_objs
 
 #-------------------------------------------------
 #   Data Directories
@@ -59,10 +62,10 @@ ncl_def_lib_dir = /home/minnawin/IOC/ncl_shared_objs
 # NOTE: This will be replaced with real-time data for Operational
 # use.  The static data is used for initial development and testing purposes.
 
-HRRR_data = /var/autofs/mnt/rapdmg2/data/grib/HRRR-wrfprs
-MRMS_data = /d2/hydro-dm/var/data/nsslMosaic/grib2/GaugeCorr_QPE/01H
-RAP_data = /var/autofs/mnt/rapdmg1/data/grib/WRF-RR-CONUS-wrfprs
-GFS_data = /var/autofs/mnt/rapdmg1/data/grib/GFS_0.25-pgrb2/
+HRRR_data = /glade/scratch/lpan/IOC/data/HRRR
+MRMS_data = /glade/scratch/lpan/IOC/data/MRMS
+GFS_data = /glade/scratch/lpan/IOC/data/gfs5
+RAP_data = /glade/scratch/lpan/IOC/data/RAP
 CFS_data = /d4/karsten/DFE/IOC_TESTING/long_range/raw_data/com/cfs/prod/cfs
 CFS_num_ensemble = 4
 
@@ -73,11 +76,11 @@ CFS_num_ensemble = 4
 [fcsthr_max]
 # Last forecast hour for the specified 
 # input model data (HRRR, RAP, etc.) to be included in the forcing
-RAP_fcsthr_max = 23
-HRRR_fcsthr_max = 23
+RAP_fcsthr_max = 24
+HRRR_fcsthr_max = 24
 GFS_fcsthr_max = 240
 CFS_fcsthr_max = 726
-MRMS_fcsthr_max = 0 
+MRMS_fcsthr_max = 0
 
 #-------------------------------------------------
 #  Triggering look back limits
@@ -86,30 +89,40 @@ MRMS_fcsthr_max = 0
 #
 # Number of hours back from current issue time to keep state
 #
-HRRR_hours_back = 3 
-RAP_hours_back = 3 
-GFS_hours_back = 12 
-CFS_hours_back = 24 
-MRMS_hours_back = 5 
+HRRR_hours_back = 3
+RAP_hours_back = 3
+GFS_hours_back = 12
+CFS_hours_back = 24
+MRMS_hours_back = 5
 
 short_range_fcst_max_wait_minutes = 40
 short_range_fcst_very_late_minutes = 50
 
 #
-# State files for regrid triggering
+# State file for rap regrid triggering
 #
-hrrr_regrid_state_file =       ./State.HrrrRegrid.txt
-rap_regrid_state_file =        ./State.RapRegrid.txt
-mrms_regrid_state_file =       ./State.MrmsRegrid.txt
-gfs_regrid_state_file =        ./State.GfsRegrid.txt
-cfs_regrid_state_file =        ./State.CfsRegrid.txt
+hrrr_regrid_state_file =        ./State.HrrrRegrid.txt
+rap_regrid_state_file =         ./State.RapRegrid.txt
+gfs_regrid_state_file =         ./State.GfsRegrid.txt
+mrms_regrid_state_file =        ./State.MrmsRegrid.txt
+gfs_regrid_state_file =         ./State.GfsRegrid.txt
+cfs_regrid_state_file =         ./State.CfsRegrid.txt
+
+#
+# State file for analysis assimilation layering triggering
+#
+analysis_assim_layering_state_file = ./State.AnalysisAssimLayering.txt
+
+#
+# State file for long range regrid triggering
+#
 long_range_regrid_state_file = ./State.LongRangeRegrid.txt
 
 #
 # State file for short range layering
 #
 short_range_layering_state_file = ./State.ShortRangeLayering.txt
-analysis_assim_layering_state_file = ./State.AnalysisAssimLayering.txt
+
 
 #-------------------------------------------------
 #    Paths to executables and other scripts
@@ -119,37 +132,40 @@ analysis_assim_layering_state_file = ./State.AnalysisAssimLayering.txt
 # ESMF, NCL
 esmf_exe=/usr/local/esmf
 # Use version 6.3.0 for latest grib tables
-ncl_exe = /opt/ncl-6.3.0/bin/ncl
+ncl_exe = /glade/apps/opt/ncl/6.3.0/intel/12.1.5/bin/ncl
 
 # Bias correction
-CFS_bias_correct_mod = ../NCL/CFSv2_bias_correct_mod.ncl
-CFS_bias_correct_exe = ../NCL/CFSv2_bias_correct.ncl
+#CFS_bias_correct_mod = /d4/karsten/DFE/IOC_TESTING/long_range/programs/CFSv2_bias_correct_mod.ncl
+CFS_bias_correct_mod = /glade/u/home/minnawin/IOC/NCL/CFSv2_bias_correct_mod.ncl
+#CFS_bias_correct_exe = /d4/karsten/DFE/IOC_TESTING/long_range/programs/CFSv2_bias_correct.ncl
+CFS_bias_correct_exe = /glade/u/home/minnawin/IOC/NCL/CFSv2_bias_correct.ncl
 
 # Regridding
-HRRR_regridding_exe = ../NCL/HRRR-2-WRF_Hydro_ESMF_regrid.ncl
-HRRR_regridding_exe_0hr = ../NCL/HRRR-2-WRF_Hydro_ESMF_regrid_0hr.ncl
-MRMS_regridding_exe = ../NCL/MRMS-2-WRF_Hydro_ESMF_regrid.ncl
-GFS_regridding_exe = ../NCL/GFS2Hydro_forcing_ESMFregrid.ncl
-RAP_regridding_exe = ../NCL/RAP-2-WRF_Hydro_ESMF_regrid.ncl
-RAP_regridding_exe_0hr = ../NCL/RAP-2-WRF_Hydro_ESMF_regrid_0hr.ncl
-CFS_regridding_exe = ../NCL/CFSv2_regrid_conus.ncl
+HRRR_regridding_exe = /glade/u/home/minnawin/IOC/NCL/HRRR-2-WRF_Hydro_ESMF_regrid.ncl
+HRRR_regridding_exe_0hr = /glade/u/home/minnawin/IOC/NCL/HRRR-2-WRF_Hydro_ESMF_regrid_0hr.ncl
+MRMS_regridding_exe = /glade/u/home/minnawin/IOC/NCL/MRMS-2-WRF_Hydro_ESMF_regrid.ncl
+GFS_regridding_exe = /glade/u/home/minnawin/IOC/NCL/GFS2Hydro_forcing_ESMFregrid.ncl
+RAP_regridding_exe = /glade/u/home/minnawin/IOC/NCL/RAP-2-WRF_Hydro_ESMF_regrid.ncl
+RAP_regridding_exe_0hr = /glade/u/home/minnawin/IOC/NCL/RAP-2-WRF_Hydro_ESMF_regrid_0hr.ncl
+CFS_regridding_exe = /glade/u/home/minnawin/IOC/NCL/CFSv2_regrid_conus.ncl
 
 # Downscaling
 # Use the same downscaling script for all products. The hgt file, geo file, and
 # input file (data to downscale) are the only input and these are all defined in # this config file.
-HRRR_downscaling_exe = ../NCL/All_WRF_Hydro_downscale.ncl
-HRRR_downscaling_exe_0hr = ../NCL/All_WRF_Hydro_downscale_0hr.ncl
-GFS_downscaling_exe = ../NCL/All_WRF_Hydro_downscale.ncl
-RAP_downscaling_exe = ../NCL/All_WRF_Hydro_downscale.ncl
-RAP_downscaling_exe_0hr = ../NCL/All_WRF_Hydro_downscale_0hr.ncl
-CFS_downscaling_exe = ../NCL/CFSv2_downscale_conus.ncl 
+HRRR_downscaling_exe = /glade/u/home/minnawin/IOC/NCL/All_WRF_Hydro_downscale.ncl
+HRRR_downscaling_exe_0hr = /glade/u/home/minnawin/IOC/NCL/All_WRF_Hydro_downscale_0hr.ncl
+GFS_downscaling_exe = /glade/u/home/minnawin/IOC/NCL/All_WRF_Hydro_downscale.ncl
+RAP_downscaling_exe = /glade/u/home/minnawin/IOC/NCL/All_WRF_Hydro_downscale.ncl
+RAP_downscaling_exe_0hr = /glade/u/home/minnawin/IOC/NCL/All_WRF_Hydro_downscale_0hr.ncl
+CFS_downscaling_exe = /glade/u/home/minnawin/IOC/NCL/All_WRF_Hydro_downscale.ncl
 
-topo_adj_fortran_exe = ../lib/topo_adjf90.so
-shortwave_downscaling_exe = ../NCL/topo_adj.ncl
+topo_adj_fortran_exe = /glade/u/home/minnawin/IOC/lib/topo_adjf90.so
+shortwave_downscaling_exe = /glade/u/home/minnawin/IOC/NCL/topo_adj.ncl
 
 # Layering and contingency
-Analysis_Assimilation_layering = ../NCL/layer_anal_assim.ncl
-Short_Range_layering = ../NCL/combine.ncl
+Analysis_Assimilation_layering = /glade/u/home/minnawin/IOC/NCL/layer_anal_assim.ncl
+Short_Range_layering = /glade/u/home/minnawin/IOC/NCL/combine.ncl
+
 
 #-------------------------------------------------
 #    Parameters needed to run bias correction
@@ -157,11 +173,12 @@ Short_Range_layering = ../NCL/combine.ncl
 
 [bias_correction]
 
+#!!!!NOT YET SET UP FOR RUNNING ON YELLOWSTONE!!!!
 #CFSv2-specific
-CFS_correspond = /d4/karsten/DFE/IOC_TESTING/realtime/params/bias_correction/nldas_param_cfsv2_subset_grid_correspondence.nc
-CFS_tmp_dir = /d4/karsten/DFE/IOC_TESTING/realtime/bias_correction/CFSv2_tmp 
-CFS_bias_parm_dir = /d4/karsten/DFE/IOC_TESTING/realtime/params/bias_correction/cfs_climo 
-NLDAS_bias_parm_dir = /d4/karsten/DFE/IOC_TESTING/realtime/params/bias_correction/nldas_climo 
+CFS_correspond = /d4/karsten/DFE/IOC_TESTING/long_range/params/nldas_param_cfsv2_subset_grid_correspondence.nc
+CFS_tmp_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/CFS/long_range_tmp
+CFS_bias_parm_dir = /d4/karsten/DFE/IOC_TESTING/long_range/params/bias_climo_param/cfsv2/climo 
+NLDAS_bias_parm_dir = /d4/karsten/DFE/IOC_TESTING/long_range/params/bias_climo_param/nldas2/climo
 
 #-------------------------------------------------
 #    Parameters needed to run regridding scripts
@@ -170,32 +187,32 @@ NLDAS_bias_parm_dir = /d4/karsten/DFE/IOC_TESTING/realtime/params/bias_correctio
 [regridding]
 
 #HRRR-specific
-HRRR_wgt_bilinear  = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/HRRR2HYDRO_d01_weight_bilinear.nc
-HRRR_dst_grid_name = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc
-HRRR_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/regridded/HRRR 
-HRRR_output_dir_0hr = /d4/karsten/DFE/IOC_TESTING/realtime/regridded/HRRR_0hr 
+HRRR_wgt_bilinear  = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/HRRR/HRRR2HYDRO_d01_weight_bilinear.nc
+HRRR_dst_grid_name = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/HRRR/geo_dst.nc
+HRRR_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/regridded/HRRR
+HRRR_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/regridded/HRRR_0hr_regrid
 
 #MRMS-specific
-MRMS_wgt_bilinear =  /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/RADAR2HYDRO_d01_weight_bilinear.nc
-MRMS_dst_grid_name = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc 
-MRMS_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/regridded/MRMS 
-MRMS_finished_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/MRMS/final 
+MRMS_wgt_bilinear =  /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/MRMS/RADAR2HYDRO_d01_weight_bilinear.nc
+MRMS_dst_grid_name = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/MRMS/geo_dst.nc
+MRMS_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/regridded/MRMS
+MRMS_finished_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_regridded/MRMS
 
 #GFS-specific
 #For GFS_0.25 data
-GFS_wgt_bilinear = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/GFS2HYDRO_d01_weight_bilinear.nc
-GFS_dst_grid_name = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc 
-GFS_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/regridded/GFS 
+GFS_wgt_bilinear = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/GFS/GFS2HYDRO_d01_weight_bilinear.nc
+GFS_dst_grid_name = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/GFS/geo_dst.nc
+GFS_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/regridded/GFS
 
 #RAP-specific
-RAP_wgt_bilinear = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/RAP2HYDRO_d01_weight_bilinear.nc
-RAP_dst_grid_name = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc 
-RAP_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/regridded/RAP 
-RAP_output_dir_0hr = /d4/karsten/DFE/IOC_TESTING/realtime/regridded/RAP_0hr 
+RAP_wgt_bilinear = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/RAP/RAP2HYDRO_d01_weight_bilinear.nc
+RAP_dst_grid_name = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/RAP/geo_dst.nc
+RAP_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/regridded/RAP
+RAP_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/regridded/RAP_0hr_regrid
 
 #CFSv2-specific
-CFS_wgt_bilinear = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/CFS2HYDRO_d01_weight_bilinear.nc
-CFS_dst_grid_name = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc 
+CFS_wgt_bilinear = /d4/karsten/DFE/IOC_TESTING/long_range/params/CFS2HYDRO_d01_weight_bilinear.nc
+CFS_dst_grid_name = /d4/karsten/DFE/IOC_TESTING/long_range/params/geo_em.d01.nc.conus_1km
 
 #-------------------------------------------------
 #    Parameters needed to run downscaling scripts
@@ -206,48 +223,54 @@ CFS_dst_grid_name = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_d
 [downscaling]
 
 # Common to all products for downscaling
-lapse_rate_file = /d4/karsten/DFE/IOC_TESTING/realtime/params/downscaling/NARRlapse1km.nc
+lapse_rate_file = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/NARRlapse1km.nc
 
 
 # HRRR
 # Currently, this is NAM227, as required by NCEP
 # Directory where regridded HRRR data to BE DOWNSCALED is located
-HRRR_data_to_downscale = /d4/karsten/DFE/IOC_TESTING/realtime/regridded/HRRR  
-HRRR_hgt_data = /d4/karsten/DFE/IOC_TESTING/realtime/params/downscaling/HRRRhgt.nc
-HRRR_geo_data = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc 
+HRRR_data_to_downscale = /glade/scratch/lpan/IOC/data/HRRR
+HRRR_hgt_data = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/HRRR/HRRRhgt.nc
+HRRR_geo_data = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/HRRR/geo_dst.nc
 # Directory where downscaled data should be saved
-HRRR_downscale_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/HRRR/staging 
-HRRR_downscale_output_dir_0hr = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/HRRR_0hr/staging 
-HRRR_finished_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/HRRR/final
-HRRR_finished_output_dir_0hr = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/HRRR_0hr/final
+HRRR_downscale_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/HRRR
+HRRR_downscale_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/HRRR_0hr_downscaled
+HRRR_finished_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/HRRR
+HRRR_finished_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/HRRR/0hr
 
 # GFS 
 # Currently GFS 0.25 degree data
 # Directory where regridded GFS data to BE DOWNSCALED is located
-GFS_data_to_downscale = /d4/karsten/DFE/IOC_TESTING/realtime/regridded/GFS  
-GFS_hgt_data = /d4/karsten/DFE/IOC_TESTING/realtime/params/downscaling/GFShgt.nc
-GFS_geo_data = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc 
+GFS_data_to_downscale = /glade/scratch/lpan/IOC/data/gfs5
+GFS_hgt_data = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/GFS/GFShgt.nc
+GFS_geo_data = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/GFS/geo_dst.nc
+
 # Directory where downscaled data should be saved
-GFS_downscale_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/GFS/staging 
-GFS_finished_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/GFS/final
+GFS_downscale_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/GFS
+GFS_finished_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/GFS
 
 
 # RAP
 # Directory where regridded RAP data to BE DOWNSCALED is located
-RAP_data_to_downscale = /d4/karsten/DFE/IOC_TESTING/realtime/regridded/RAP 
-RAP_hgt_data = /d4/karsten/DFE/IOC_TESTING/realtime/params/downscaling/RAPhgt.nc
-RAP_geo_data = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc 
-# Directory where downscaled data should be saved
-RAP_downscale_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/RAP/staging 
-RAP_downscale_output_dir_0hr = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/RAP_0hr/staging
-RAP_finished_output_dir = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/RAP/final 
-RAP_finished_output_dir_0hr = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/RAP_0hr/final
+RAP_data_to_downscale = /glade/scratch/lpan/IOC/data/RAP
+RAP_hgt_data = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/RAP/RAPhgt.nc
+RAP_geo_data = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weighting/RAP/geo_dst.nc
 
+# Directory where downscaled data should be saved
+RAP_downscale_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/RAP
+RAP_downscale_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/RAP_0hr_downscaled
+RAP_finished_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/RAP
+RAP_finished_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/RAP/0hr
+
+
+#!!!!! NOT SET UP FOR YELLOWSONE!!!!
 # CFS
 # Directories that contain distribution parameter files for CFS/NLDAS
 # In addition, output directory is specified here. 
-CFS_hgt_data = /d4/karsten/DFE/IOC_TESTING/realtime/params/downscaling/cfsa_hgt1km.nc 
-CFS_geo_data = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc  
+CFS_hgt_data = /d4/karsten/DFE/IOC_TESTING/long_range/params/cfsa_hgt1km.nc 
+#CFS_downscale_out_dir = /d4/karsten/DFE/IOC_TESTING/long_range/final_data/Long_Range
+CFS_downscale_out_dir =  /d4/hydro-dm/IOC/albo_test/Long_Range
+CFS_geo_data = /d4/karsten/DFE/IOC_TESTING/long_range/params/geo_em.d01.nc.conus_1km
 
 #-------------------------------------------------
 #
@@ -258,17 +281,17 @@ CFS_geo_data = /d4/karsten/DFE/IOC_TESTING/realtime/params/regridding/geo_dst.nc
 #-------------------------------------------------
 [layering]
 
-short_range_primary = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/HRRR/final 
+# HRRR and RAP used for Analysis and Assimilation
+# Forcing Configuration
+short_range_primary = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/HRRR
+short_range_secondary = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/RAP
 
-short_range_secondary = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/RAP/final 
+analysis_assimilation_tmp = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/Anal_Assim/tmp
+analysis_assimilation_output = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/Anal_Assim
+qpe_combine_parm_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/anal_assim/combine_params
 
+short_range_output = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/Short_Range
 
-analysis_assimilation_tmp = /d4/karsten/DFE/IOC_TESTING/realtime/downscaled/tmp 
-analysis_assimilation_output = /d4/karsten/DFE/IOC_TESTING/realtime/final/Anal_Assim 
-qpe_combine_parm_dir = /d4/karsten/DFE/IOC_TESTING/realtime/params/layering/combine_params
+medium_range_output = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/Medium_Range
 
-short_range_output = /d4/karsten/DFE/IOC_TESTING/realtime/final/Short_Range
-
-medium_range_output = /d4/karsten/DFE/IOC_TESTING/realtime/final/Medium_Range
-
-long_range_output =  /d4/karsten/DFE/IOC_TESTING/realtime/final/Long_Range
+long_range_output = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/Long_Range
