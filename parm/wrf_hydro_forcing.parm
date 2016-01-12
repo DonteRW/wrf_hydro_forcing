@@ -235,8 +235,8 @@ HRRR_geo_data = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/wei
 # Directory where downscaled data should be saved
 HRRR_downscale_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/HRRR
 HRRR_downscale_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/HRRR_0hr_downscaled
-HRRR_finished_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/HRRR
-HRRR_finished_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/HRRR/0hr
+HRRR_finished_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/AnalAssimTest/HRRR
+HRRR_finished_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/AnalAssimTest/HRRR/0hr
 
 # GFS 
 # Currently GFS 0.25 degree data
@@ -259,8 +259,8 @@ RAP_geo_data = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/weig
 # Directory where downscaled data should be saved
 RAP_downscale_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/RAP
 RAP_downscale_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/downscaled/RAP_0hr_downscaled
-RAP_finished_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/RAP
-RAP_finished_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/RAP/0hr
+RAP_finished_output_dir = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/AnalAssimTest/RAP
+RAP_finished_output_dir_0hr = /glade/scratch/gochis/IOC_evaluation_datasets/Forcing_Engine/workspace/finished_downscaled/AnalAssimTest/RAP/0hr
 
 
 #!!!!! NOT SET UP FOR YELLOWSONE!!!!
