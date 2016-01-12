@@ -47,7 +47,8 @@ def forcing(action, prod, file):
 
     # Read the parameters from the config/param file.
     parser = SafeConfigParser()
-    parser.read('/d4/karsten/DFE/wrf_hydro_forcing/parm/wrf_hydro_forcing.parm')
+    #parser.read('/d4/karsten/DFE/wrf_hydro_forcing/parm/wrf_hydro_forcing.parm')
+    parser.read('/glade/u/home/minnawin/IOC/code/wrf_hydro_forcing.parm')
 
     # Set up logging, environments, etc.
     forcing_config_label = "Anal_Assim"
@@ -70,12 +71,27 @@ def forcing(action, prod, file):
         # Check for HRRR, RAP, MRMS products. 
         logging.info("Regridding and Downscaling for %s", product_data_name)
 
-        if fcsthr == 0 and prod == "HRRR":
-            downscale_dir = parser.get('downscaling', 'HRRR_downscale_output_dir_0hr')
+
+        if prod == "HRRR":
+            if fcsthr == 0:
+                downscale_dir = parser.get('downscaling', 'HRRR_downscale_output_dir_0hr')
+                zero_process = True
+                zero_move = True
+
+            elif fcsthr == 3:
+                downscale_dir = parser.get('downscaling', 'HRRR_downscale_output_dir')
+                zero_process = False
+                zero_move = False
+
+            else:
+                logging.error("Invalid forecast hour chosen for HRRR")
+                return(1)
+            
+
             regridded_file = whf.regrid_data(product_data_name,file,parser,False, \
-                             zero_process=True)
+                                   zero_process)
             whf.downscale_data(product_data_name,regridded_file, parser,False, False, \
-                               zero_process=True)
+                                    zero_process)
 
             # Move downscaled file to staging area where triggering will monitor
             match = re.match(r'.*/([0-9]{10})/([0-9]{12}.LDASIN_DOMAIN1.nc)',regridded_file)
@@ -85,12 +101,26 @@ def forcing(action, prod, file):
                 # File should have been created in downscale_data step.
                 whf.file_exists(full_finished_file)
                 whf.move_to_finished_area(parser, prod, full_finished_file, zero_move=True)
-        elif fcsthr == 0 and prod == "RAP":
-            downscale_dir = parser.get('downscaling', 'RAP_downscale_output_dir_0hr')
+
+        elif prod == "RAP":
+            if fcsthr == 0:
+                downscale_dir = parser.get('downscaling', 'RAP_downscale_output_dir_0hr')
+                zero_process = True
+                zero_move = True
+
+            elif fcsthr == 3:
+                downscale_dir = parser.get('downscaling', 'RAP_downscale_output_dir')
+                zero_process = False
+                zero_move = False
+            else:
+                logging.error("Invalid forecast hour chosen for HRRR")
+                return(1)
+
             regridded_file = whf.regrid_data(product_data_name,file,parser,False, \
-                             zero_process=True)
+                                 zero_process)
             whf.downscale_data(product_data_name,regridded_file, parser,False, False, \
-                               zero_process=True)
+                                   zero_process)
+
             # Move downscaled file to staging area where triggering will monitor
             match = re.match(r'.*/([0-9]{10})/([0-9]{12}.LDASIN_DOMAIN1.nc)',regridded_file)
             if match:
@@ -98,18 +128,21 @@ def forcing(action, prod, file):
                 full_finished_file = full_dir + "/" + match.group(2)
                 # File should have been created in downscale_data step.
                 whf.file_exists(full_finished_file)
-                whf.move_to_finished_area(parser, prod, full_finished_file, zero_move=True) 
+                whf.move_to_finished_area(parser, prod, full_finished_file, zero_move) 
+
+
         elif prod == "MRMS":
             regridded_file = whf.regrid_data(product_data_name,file,parser,False)
-
+    
             # Move regridded file to staging area where triggering will monitor
             # First make sure file exists
             whf.file_exists(regridded_file)
             whf.move_to_finished_area(parser, prod, regridded_file, zero_move=False)
         else:
-            logging.error("Either invalid forecast hour or invalid product chosen")
+            logging.error("Invalid product chosen")
             logging.error("Only 00hr forecast files, and RAP/HRRR/MRMS valid")
             return(1)
+  
     else: # Invalid action selected
         logging.error("ERROR [Anal_Assim_Forcing]- Invalid action selected")
         return(1)
@@ -153,9 +186,10 @@ def anal_assim_layer(cycleYYYYMMDDHH,fhr,action):
     fcstWindowDate = validDate + datetime.timedelta(seconds=-3*3600) # Used for 3-hr forecast
                      # HRRR/RAP files necessary for fluxes and precipitation data.
   
-    # Obtain analysis and assimiltation configuration parameters.
+    # Obtain analysis and assimilation configuration parameters.
     parser = SafeConfigParser()
-    parser.read('/d4/karsten/DFE/wrf_hydro_forcing/parm/wrf_hydro_forcing.parm')
+    #parser.read('/d4/karsten/DFE/wrf_hydro_forcing/parm/wrf_hydro_forcing.parm')
+    parser.read('/glade/u/home/minnawin/IOC/code/wrf_hydro_forcing.parm')
     out_dir = parser.get('layering','analysis_assimilation_output')
     tmp_dir = parser.get('layering','analysis_assimilation_tmp')
     qpe_parm_dir = parser.get('layering','qpe_combine_parm_dir')
