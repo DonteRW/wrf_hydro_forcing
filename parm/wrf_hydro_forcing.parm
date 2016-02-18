@@ -63,7 +63,7 @@ HRRR_data = /var/autofs/mnt/rapdmg2/data/grib/HRRR-wrfprs
 MRMS_data = /d2/hydro-dm/var/data/nsslMosaic/grib2/GaugeCorr_QPE/01H
 RAP_data = /var/autofs/mnt/rapdmg1/data/grib/WRF-RR-CONUS-wrfprs
 GFS_data = /var/autofs/mnt/rapdmg1/data/grib/GFS_0.25-pgrb2/
-CFS_data = /d4/karsten/DFE/IOC_TESTING/long_range/raw_data/com/cfs/prod/cfs
+CFS_data = /d7/karsten/CFSv2/com/cfs/prod/cfs
 CFS_num_ensemble = 4
 
 #-------------------------------------------------
