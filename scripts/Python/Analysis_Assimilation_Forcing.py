@@ -288,18 +288,18 @@ def anal_assim_layer(cycleYYYYMMDDHH,fhr,action,config):
                 "/" + validDate.strftime("%Y%m%d%H") + "00.LDASIN_DOMAIN1.nc"
     mrmsPath = mrms_ds_dir + "/" + validDate.strftime("%Y%m%d%H") + \
                 "/" + validDate.strftime("%Y%m%d%H") + "00.LDASIN_DOMAIN1.nc"
-    hrrrBiasPath = qpe_parm_dir + "/HRRR_CMC-CPC_bias-corr_m" + \
-                   validDate.strftime("%m") + "_v8_wrf1km.grb2"
+    hrrrBiasPath = qpe_parm_dir + "/HRRR_NLDAS-CPC_bias-corr_m" + \
+                   validDate.strftime("%m") + "_v9_wrf1km.grb2"
     hrrrWgtPath = qpe_parm_dir + "/HRRR_wgt_m" + \
-                  validDate.strftime("%m") + "_v7_wrf1km.grb2"
-    mrmsBiasPath = qpe_parm_dir + "/MRMS_radonly_CMC-CPC_bias-corr_m" + \
-                   validDate.strftime("%m") + "_v8_wrf1km.grb2"
-    mrmsWgtPath = qpe_parm_dir + "/MRMS_radonly_wgt_m" + \
-                  validDate.strftime("%m") + "_v7_wrf1km.grb2"
-    rapBiasPath = qpe_parm_dir + "/RAPD_CMC-CPC_bias-corr_m" + \
                   validDate.strftime("%m") + "_v8_wrf1km.grb2"
+    mrmsBiasPath = qpe_parm_dir + "/MRMS_radonly_NLDAS-CPC_bias-corr_m" + \
+                   validDate.strftime("%m") + "_v9_wrf1km.grb2"
+    mrmsWgtPath = qpe_parm_dir + "/MRMS_radonly_wgt_m" + \
+                  validDate.strftime("%m") + "_v8_wrf1km.grb2"
+    rapBiasPath = qpe_parm_dir + "/RAPD_NLDAS-CPC_bias-corr_m" + \
+                  validDate.strftime("%m") + "_v9_wrf1km.grb2"
     rapWgtPath = qpe_parm_dir + "/RAPD_wgt_m" + \
-                 validDate.strftime("%m") + "_v7_wrf1km.grb2"
+                 validDate.strftime("%m") + "_v8_wrf1km.grb2"
 
     # Sanity checking on parameter data
     try:
