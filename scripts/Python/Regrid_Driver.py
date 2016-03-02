@@ -96,7 +96,7 @@ def regridIfZeroHr(configFile, fileType, fname):
    if (f._time._forecastHour == 0):
       WhfLog.setConfigType('AA')
       WhfLog.debug("SPECIAL 0 hour case %s", fname[9:0])
-      aaf.forcing(configFile, 'regrid', 'HRRR', fname[9:])
+      aaf.forcing(configFile, 'regrid', fileType, fname[9:])
       WhfLog.setConfigType('Short')
 
 #----------------------------------------------------------------------------
