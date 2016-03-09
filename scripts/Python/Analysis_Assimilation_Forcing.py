@@ -293,7 +293,7 @@ def anal_assim_layer(cycleYYYYMMDDHH,fhr,action,config):
     hrrrWgtPath = qpe_parm_dir + "/HRRR_wgt_m" + \
                   validDate.strftime("%m") + "_v8_wrf1km.grb2"
     mrmsBiasPath = qpe_parm_dir + "/MRMS_radonly_NLDAS-CPC_bias-corr_m" + \
-                   validDate.strftime("%m") + "_v9_wrf1km.grb2"
+                   validDate.strftime("%m") + "_v9_wrf1km-sm60.grb2"
     mrmsWgtPath = qpe_parm_dir + "/MRMS_radonly_wgt_m" + \
                   validDate.strftime("%m") + "_v8_wrf1km.grb2"
     rapBiasPath = qpe_parm_dir + "/RAPD_NLDAS-CPC_bias-corr_m" + \

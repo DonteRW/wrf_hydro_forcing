@@ -249,7 +249,7 @@ def regrid_data( product_name, file_to_regrid, parser, substitute_fcst = False, 
         
         if return_value != 0:
             WhfLog.error('The regridding of %s was unsuccessful, \
-                          return value of %s', product,return_value)
+                          return value of %d', product,return_value)
 
             raise NCLError('NCL regridding of %s unsuccessful with return value %s'%(product,return_value))
     return regridded_file
@@ -614,7 +614,7 @@ def downscale_data(product_name, file_to_downscale, parser, downscale_shortwave=
             # of the required and shortwave radiation
             if return_value != 0 or swdown_return_value != 0:
                 WhfLog.error('The downscaling of %s was unsuccessful, \
-                             return value of %s', product,return_value)
+                             return value of %d', product,return_value)
                 # Remove regridded file and downscaled file 
                 cmd = 'rm -rf ' + file_to_downscale
                 status = os.system(cmd)
@@ -667,7 +667,7 @@ def downscale_data(product_name, file_to_downscale, parser, downscale_shortwave=
                       raise SystemCommandError('Failed to remove corrupted/incomplete output file and path %s'%full_downscaled_file)
                 # Raise exception for failed NCL downscaling
                 WhfLog.error('The downscaling of %s was unsuccessful, \
-                             return value of %s', product,return_value)
+                             return value of %d', product,return_value)
                 raise NCLError('NCL downscaling for %s unsuccessful with return value %s', product, return_value)
             else: # Remove regridded file as it's no longer needed
                 cmd = 'rm -rf ' + file_to_downscale
