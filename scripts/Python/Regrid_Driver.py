@@ -565,7 +565,7 @@ def main(argv):
        try:
           regrid(f, fileType, configFile);
        except:
-          WhfLog.error("Could not regrid/downscale %f", f)
+          WhfLog.error("Could not regrid/downscale %s", f)
        else:
           WhfLog.debug("Adding new file %s, and writing state file", f)
           if (not state.addFileIfNew(f)):
