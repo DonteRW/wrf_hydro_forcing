@@ -135,7 +135,8 @@ def forcing(configFile, action, prod, file, prod2=None, file2=None):
                     whf.downscale_data(product_data_name,regridded_file, parser, True, True)
                 except (NCLError, ZeroHourReplacementError) as e:
                     WhfLog.error("FAIL could not downscale data for hour 0 RAP")
-                    raise 
+                    # Ignore, and check the next file in the regridded directory.
+                    pass
 
                 else:
                     # Move the finished downscaled file to the "finished" area so the triggering

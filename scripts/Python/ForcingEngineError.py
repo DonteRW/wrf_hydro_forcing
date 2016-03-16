@@ -102,7 +102,7 @@ class MissingInputError(ForcingEngineError):
     
 class InvalidArgumentError(ForcingEngineError):
     '''Used when one or more input parameters
-       is missing.
+       is incorrect/unexpected.
     '''
     def __init__(self, value):
         self.parameter = value

@@ -72,8 +72,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/esmf/ESMF_regridding.ncl"
 begin
 
   ; Load bias correction module file containing correction/combine routines
-  modFile = getenv("CFS_NCL_BIAS_MOD")
-  load modFile
+  load "$CFS_NCL_BIAS_MOD"
 
   ; Determine if this is a initial time step or not.
   if (toint(cycleYYYYMMDDHH) .eq. toint(fcstYYYYMMDDHH))

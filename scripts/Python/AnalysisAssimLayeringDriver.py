@@ -659,6 +659,8 @@ class State:
             if (idiff > parms._veryLateSeconds):
                 WhfLog.warning("WARNING: Inputs for layering timeout Issue:%s",
                                 self._issue.strftime("%Y%m%d%H"))
+                s = self._step[0].debugPrintString()
+                WhfLog.warning("WARNING: 0, state=%s", s)
                 self._step[0].forceLayer(parms, config, self._issue)
                 self._layered = True
                 
@@ -719,6 +721,7 @@ def main(argv):
         WhfLog.debug("No data")
         return 0
 
+    
     # if there is not a state file, create one now using newest
     if (not os.path.exists(parms._stateFile)):
         state = State()

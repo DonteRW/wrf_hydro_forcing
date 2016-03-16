@@ -4,6 +4,7 @@ import datetime
 import WhfLog as wlog
 import re
 from ConfigParser import SafeConfigParser
+from ForcingEngineError import InvalidArgumentError
 
 
 def is_within_time_range(start_dt, end_dt, file, prod, is_yellowstone=False):
@@ -42,7 +43,7 @@ def is_within_time_range(start_dt, end_dt, file, prod, is_yellowstone=False):
     else:
         return False
     
-def do_regrid(config_file, dir_base, prod, data_files, is_yellowstone):
+def do_regrid(config_file, dir_base, prod, data_files, is_yellowstone=False):
     """Do the regridding and downscaling of the product"""
     
     for file in data_files:
@@ -54,7 +55,10 @@ def do_regrid(config_file, dir_base, prod, data_files, is_yellowstone):
         else:
             match = re.match(r'(.*)/([0-9]{8}_i[0-9]{2}_f[0-9]{2,3}.*)',file)
             file_only = match.group(2) 
-        aaf.forcing(config_file,"regrid",prod,file_only)
+        try:
+           aaf.forcing(config_file,"regrid",prod,file_only)
+        except InvalidArgumentError:
+           pass
 
 
 def do_layering(config_file,parser,rap_downscale_dir, hrrr_downscale_dir, mrms_downscale_dir, fcst_hr, is_yellowstone=False):
@@ -138,19 +142,19 @@ def main():
     #is_yellowstone = True
     is_yellowstone = False
     parser = SafeConfigParser()
-    config_file = "../../parm/wrf_hydro_forcing.parm"
+    config_file = "../../parm/b_wrf_hydro_forcing.parm"
     parser.read(config_file)    
 
     # Set up logger
-    wlog.init(parser, "testAA", "AA","Regrid","MRMS")
+    #wlog.init(parser, "testAA", "AA","Regrid","MRMS")
 
     # Start and end dates 
     if is_yellowstone:
          start_dt = datetime.datetime.strptime("20151004","%Y%m%d")
          end_dt = datetime.datetime.strptime("20151005","%Y%m%d")
     else:
-         start_dt = datetime.datetime.strptime("20160202","%Y%m%d")
-         end_dt = datetime.datetime.strptime("20160204","%Y%m%d")
+         start_dt = datetime.datetime.strptime("20160215","%Y%m%d")
+         end_dt = datetime.datetime.strptime("20160216","%Y%m%d")
 
     # Set the directory where the input data resides.
     # For running on yellowstone:
@@ -181,21 +185,23 @@ def main():
     # directory is continually adding more dates.
     RAP_files_with_path = [x for x in all_RAP_files_with_path if is_within_time_range(start_dt,end_dt,x,"RAP",is_yellowstone)]
     HRRR_files_with_path = [x for x in all_HRRR_files_with_path if is_within_time_range(start_dt,end_dt,x,"HRRR",is_yellowstone)]
-    #    
     MRMS_files_with_path = [x for x in all_MRMS_files_with_path if is_within_time_range(start_dt,end_dt,x,"MRMS",is_yellowstone)]
 
-    #do_regrid(config_file, RAP_dir_base,'RAP', RAP_files_with_path, is_yellowstone)
-    #do_regrid(config_file, HRRR_dir_base, 'HRRR', HRRR_files_with_path, is_yellowstone)
-    do_regrid(config_file,MRMS_dir_base, 'MRMS', MRMS_files_with_path, is_yellowstone)
-#    do_layering(config_file, parser, RAP_0hr_downscale_dir, None, None, 0, is_yellowstone)
-    #do_layering(config_file, parser, RAP_downscale_dir, None, None, -1, is_yellowstone)
-    #do_layering(config_file, parser, RAP_downscale_dir, None, None, -2, is_yellowstone)
-    #do_layering(config_file, parser, RAP_0hr_downscale_dir, HRRR_0hr_downscale_dir, None,0, is_yellowstone)
-    #do_layering(config_file, parser, RAP_downscale_dir, HRRR_downscale_dir, None, -1, is_yellowstone)
-    #do_layering(config_file, parser, RAP_downscale_dir, HRRR_downscale_dir, None, -2, is_yellowstone)
-    #do_layering(config_file, parser, RAP_0hr_downscale_dir, HRRR_0hr_downscale_dir,MRMS_downscale_dir, 0, is_yellowstone)
-    #do_layering(config_file, parser, RAP_downscale_dir, HRRR_downscale_dir,MRMS_downscale_dir, -1, is_yellowstone)
-    #do_layering(config_file, RAP_downscale_dir, HRRR_downscale_dir,MRMS_downscale_dir, -2, is_yellowstone)
+    wlog.init(parser, "testAA", "AA","Regrid","RAP")
+    do_regrid(config_file, RAP_dir_base,'RAP', RAP_files_with_path)
+    wlog.init(parser, "testAA", "AA","Regrid","HRRR")
+    do_regrid(config_file, HRRR_dir_base, 'HRRR', HRRR_files_with_path)
+    wlog.init(parser, "testAA", "AA","Regrid","MRMS")
+    do_regrid(config_file,MRMS_dir_base, 'MRMS', MRMS_files_with_path)
+#    do_layering(config_file, parser, RAP_0hr_downscale_dir, None, None, 0)
+    #do_layering(config_file, parser, RAP_downscale_dir, None, None, -1)
+    #do_layering(config_file, parser, RAP_downscale_dir, None, None, -2)
+    #do_layering(config_file, parser, RAP_0hr_downscale_dir, HRRR_0hr_downscale_dir, None,0)
+    #do_layering(config_file, parser, RAP_downscale_dir, HRRR_downscale_dir, None, -1)
+    #do_layering(config_file, parser, RAP_downscale_dir, HRRR_downscale_dir, None, -2)
+    #do_layering(config_file, parser, RAP_0hr_downscale_dir, HRRR_0hr_downscale_dir,MRMS_downscale_dir, 0)
+    #do_layering(config_file, parser, RAP_downscale_dir, HRRR_downscale_dir,MRMS_downscale_dir, -1)
+    #do_layering(config_file, RAP_downscale_dir, HRRR_downscale_dir,MRMS_downscale_dir, -2)
 
 
 

@@ -790,14 +790,14 @@ class ForecastTime:
       True if ftime >= self
       """
       if (self._fcstTime < ftime._fcstTime):
-         return 1
+         return True
       elif (self._fcstTime == ftime._fcstTime):
          if (self._issueHour < ftime._issueHour):
-            return 1
+            return True
          elif (self._issueHour == ftime._issueHour):
             if (self._forecastHour <= ftime._forecastHour):
-               return 1
-      return 0
+               return True
+      return False
 
    def inputIsNewerIssueHour(self, ftime):
       """ Check if input forecast time has issue hour newer than self
@@ -810,11 +810,11 @@ class ForecastTime:
       True if ftime has issue hour newer than self
       """
       if (self._fcstTime < ftime._fcstTime):
-         return 1
+         return True
       elif (self._fcstTime == ftime._fcstTime):
          if (self._issueHour < ftime._issueHour):
-            return 1
-      return 0
+            return True
+      return False
 
    def withinNHours(self, ftime, N):
       """ Check if input time is within some number of issue hours of self

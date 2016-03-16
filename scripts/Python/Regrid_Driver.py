@@ -84,10 +84,9 @@ def regridIfZeroHr(configFile, fileType, fname):
    -------
    None
    """
-
    # check for 0 hour by creating a DataFile and checking forecast hour
    try:
-      f = df.DataFile(fname, fileType)
+      f = df.DataFile(fname[0:8], fname[9:], fileType)
    except FilenameMatchError as fe:
       WhfLog.debug("Cannot check for 0 hour data due to %s", fe)
       raise
@@ -97,7 +96,7 @@ def regridIfZeroHr(configFile, fileType, fname):
    if (f._time._forecastHour == 0):
       WhfLog.setConfigType('AA')
       WhfLog.debug("SPECIAL 0 hour case %s", fname[9:0])
-      aaf.forcing(configFile, 'regrid', 'HRRR', fname[9:])
+      aaf.forcing(configFile, 'regrid', fileType, fname[9:])
       WhfLog.setConfigType('Short')
 
 #----------------------------------------------------------------------------
@@ -138,8 +137,7 @@ def regrid(fname, fileType, configFile):
          raise InvalidArgumentError("Unknown file type " + fileType)
    except ZeroHourReplacementError as z:
       WhfLog.info("ERROR REGRIDDING: %s", z)
-      WhfLog.info("Remove this forecast from state and continue")
-      return
+      WhfLog.info("Remove this forecast from list of to do forecasts")
    except:
       WhfLog.info("ERROR REGRIDDING %s DATA, file=%s", fileType, fname)
       raise
@@ -288,6 +286,8 @@ class State:
        """
       self._data = df.filterWithinNHours(self._data, fileType, time, hoursBack)
       
+   def isNew(self, f):
+      return (not f in self._data)
 
    def addFileIfNew(self, f):
       """ If input file is not in state, add it
@@ -320,6 +320,72 @@ class State:
 
       """
       self._data.sort()
+
+   def lookForNew(self, data, hoursBack, fileType):
+      """ See if new data has arrived compared to state.
+      If a new issue time, purge older stuff from state.
+
+      Parameters
+      ----------
+      data: DataFiles
+         The newest data
+      hoursBack: int
+         Maximum number of hours back to keep data in state
+      fileType : str
+         'HRRR', 'RAP', ...
+      Returns
+      -------
+      list[str]
+          The data file names that are are to be added to state
+      """
+         
+      ret = []
+      fnames = data.getFnames()
+      if (not fnames):
+         return ret
+
+      if (self.isEmpty()):
+         WhfLog.debug("Adding to empty list")
+      else:
+         sname = self.newest()
+         if (not sname):
+            WhfLog.error("Expected file, got none")
+            return ret
+         if (fnames[-1] > sname):
+            WhfLog.debug("Newer time encountered")
+            # see if issue time has increased and if so, purge old stuff
+            # create DataFile objects, which requires breaking the full
+            # file into yymmdd/filename
+            sind = sname.find('/')
+            if (sind < 0):
+               raise FileNameMatchError('Cannot parse directory from ' + sname)
+            nind = fnames[-1].find('/')
+            if (sind < 0):
+               raise FileNameMatchError('Cannot parse directory from ' + fnames[-1])
+
+            symd = sname[:sind]
+            sfile = sname[sind+1:]
+            nymd = fnames[-1][:nind]
+            nfile = fnames[-1][nind+1:]
+            WhfLog.debug("Checking %s / %s  against %s / %s", symd, sfile, nymd, nfile)
+            try:
+               df0 = df.DataFile(symd, sfile, fileType)
+               df1 = df.DataFile(nymd, nfile, fileType)
+            except FilenameMatchError as fe:
+               WhfLog.debug("Cannot update due to %s", fe)
+            except InvalidArgumentError as ie:
+               WhfLog.debug("Cannot update due to %s", ie)
+
+            if (df0._time.inputIsNewerIssueHour(df1._time)):
+               WhfLog.debug("%s Issue hour has increased, purge now",
+                            fileType)
+               self.update(df1._time, hoursBack, fileType)
+
+      for f in fnames:
+         if (self.isNew(f)):
+            ret.append(f)
+      return ret
+
 
    def updateWithNew(self, data, hoursBack, fileType):
       """ Update internal state with new data
@@ -355,8 +421,8 @@ class State:
             # see if issue time has increased and if so, purge old stuff
             # create DataFile objects
             try:
-               df0 = df.DataFile(sname, fileType)
-               df1 = df.DataFile(fnames[-1], fileType)
+               df0 = df.DataFile(sname[0:8], sname[9:], fileType)
+               df1 = df.DataFile(fnames[-1][0:8], fnames[-1][9:], fileType)
             except FilenameMatchError as fe:
                WhfLog.debug("Cannot update due to %s", fe)
             except InvalidArgumentError as ie:
@@ -494,11 +560,20 @@ def main(argv):
 
     # Update the state to reflect changes, returning those files to regrid
     # Regrid 'em
-    toProcess = state.updateWithNew(data, parms._hoursBack, fileType)
+    toProcess = state.lookForNew(data, parms._hoursBack, fileType)
     for f in toProcess:
-        regrid(f, fileType, configFile)
-
-    # write out state and exit
+       try:
+          regrid(f, fileType, configFile);
+       except:
+          WhfLog.error("Could not regrid/downscale %s", f)
+       else:
+          WhfLog.debug("Adding new file %s, and writing state file", f)
+          if (not state.addFileIfNew(f)):
+             WhfLog.error("File %s was not new", f)
+          else:
+             state.write(parms._stateFile, fileType);
+          
+    # write out state (in case it has not been written yet) and exit
     #state.debugPrint()
     state.write(parms._stateFile, fileType)
     return 0

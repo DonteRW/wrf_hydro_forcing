@@ -9,6 +9,7 @@ from ForcingEngineError import UnrecognizedCommandError
 from ForcingEngineError import MissingFileError
 from ForcingEngineError import SystemCommandError
 from ForcingEngineError import NCLError
+import WhfLog as wlog
 
 
 def is_within_time_range(start_dt, end_dt, file, prod, is_yellowstone=False):
@@ -38,7 +39,7 @@ def is_within_time_range(start_dt, end_dt, file, prod, is_yellowstone=False):
     else:
         return False
     
-def do_regrid(dir_base, prod, data_files, is_yellowstone):
+def do_regrid(config_file,dir_base, prod, data_files, is_yellowstone):
     """Do the regridding and downscaling of the product"""
     
     for file in data_files:
@@ -46,7 +47,7 @@ def do_regrid(dir_base, prod, data_files, is_yellowstone):
         # regrid_data() is only expecting a file name.
         match = re.match(r'(.*)/([0-9]{8}_i[0-9]{2}_f[0-9]{2,3}.*)',file)
         file_only = match.group(2) 
-        srf.forcing("../../parm/wrf_hydro_forcing.parm","regrid",prod,file_only)
+        srf.forcing(config_file,"regrid",prod,file_only)
 
 
 def do_layering(rap_downscale_dir, hrrr_downscale_dir, is_yellowstone=False):
@@ -95,21 +96,24 @@ def main():
     #is_yellowstone = True
     is_yellowstone = False
     parser = SafeConfigParser()
+    config_file = "../../parm/b_wrf_hydro_forcing.parm" 
 
     try:
-        parser.read('../../parm/wrf_hydro_forcing.parm')
+        parser.read(config_file)
     except:
         print "d'oh!"
 
-    
+   # Set up logger
+    #wlog.init(parser, "testShort", "Short","Regrid","HRRR")
+ 
 
     # Start and end dates 
     if is_yellowstone:
          start_dt = datetime.datetime.strptime("20150930","%Y%m%d")
          end_dt = datetime.datetime.strptime("20151001","%Y%m%d")
     else:
-         start_dt = datetime.datetime.strptime("20160126","%Y%m%d")
-         end_dt = datetime.datetime.strptime("20160127","%Y%m%d")
+         start_dt = datetime.datetime.strptime("20160215","%Y%m%d")
+         end_dt = datetime.datetime.strptime("20160216","%Y%m%d")
 
     # Set the directory where the input data resides.
     # For running on yellowstone:
@@ -138,7 +142,9 @@ def main():
     #for hrrr in HRRR_files_with_path:
     #    print ("process %s")%(hrrr)
     # do the processing on only the input grib files 
-    #do_regrid(RAP_dir_base,'RAP', RAP_files_with_path, is_yellowstone)
+    wlog.init(parser, "testShort", "Short","Regrid","RAP")
+    do_regrid(config_file,RAP_dir_base,'RAP', RAP_files_with_path, is_yellowstone)
+    wlog.init(parser, "testShort", "Short","Regrid","HRRR")
     do_regrid(HRRR_dir_base, 'HRRR', HRRR_files_with_path, is_yellowstone)
     #do_layering(RAP_downscale_dir, HRRR_downscale_dir, is_yellowstone)
 

@@ -288,8 +288,8 @@ class State:
             # see if issue time has increased and if so, purge old stuff
             # create DataFile objects
             try:
-               df0 = df.DataFile(sname, 'CFS')
-               df1 = df.DataFile(fnames[-1], 'CFS')
+               df0 = df.DataFile(sname[0:8], sname[9:], 'CFS')
+               df1 = df.DataFile(fnames[-1][0:8], fnames[-1][9:], 'CFS')
             except FilenameMatchError as fe:
                WhfLog.debug("Skipping file use due to %s", fe)
             except InvalidArgumentError as ie:
