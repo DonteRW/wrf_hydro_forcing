@@ -2,13 +2,14 @@ import os
 import sys
 import re
 import shutil
+import time
 import WRF_Hydro_forcing as whf
 from ForcingEngineError import MissingDirectoryError
 from ForcingEngineError import MissingFileError
 
 
 
-def moveFiles(source_dir, destination_dir):
+def moveFiles(source_dir, destination_dir, delay=0):
     '''Moves all the files from the source directory to the
        destination directory.
   
@@ -66,6 +67,7 @@ def moveFiles(source_dir, destination_dir):
             whf.mkdir_p(dest_path)
             dest = dest_path +  filename_only
             shutil.move(file, dest)
+            time.sleep(delay)
 
 
 
@@ -103,25 +105,27 @@ def file_exists(file):
 
 if __name__ == "__main__":
     #Indicate the source and destination for testing/mimicking real-time data
-    #
     source = "/d7/hydro-dm/data/MRMS/"
     destination = "/d8/hydro-dm/data/MRMS/"
-    usage =  "Usage: python moveFiles.py [move|reverse]"
+ 
+    #Set time delay (in seconds) for move so that this actually behaves more like real-time
+    #If undefined, then the default is 0, but if reversing, we want to revert as quickly as possible
+    delay = 65
+
+    usage =  "Usage: python moveFiles.py [forward|reverse]"
 
     if len(sys.argv) == 1:
         print usage
 
     else:
-        if sys.argv[1] == 'move':
+        if sys.argv[1] == 'forward':
             print "Moving files from source to destination to mimic real-time data..."
+            moveFiles(source, destination, delay)
         elif sys.argv[1] == 'reverse':
             # Resetting, reversing the files back to their original directory
             print "Reversing.  Moving files back to original destination directory for retesting..."
             source,destination = destination,source
+            moveFiles(source, destination)
         else:
             print usage
 
-    # Move the files
-    moveFiles(source, destination)
-    
-    
