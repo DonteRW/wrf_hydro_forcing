@@ -795,9 +795,6 @@ def main(argv):
     # read in state
     state2 = State()
     state2.initFromStateFile(parms._stateFile)
-    if state2.isEmpty():
-        # error return here
-        return 0
     
     # check for new issue time
     if (state2.isNewModelIssueTime(newestT)):

@@ -736,11 +736,8 @@ def main(argv):
     state2 = State()
     state2.initFromStateFile(parms._stateFile)
     #state2.debugPrint()
-    if state2._empty:
-        # error return here
-        return 0
-    
-    # check for new issue time
+
+        # check for new issue time
     if (state2.isNewModelIssueTime(newestT)):
         WhfLog.info("Re-Initializing state, new model issue time %s", newestT)
         state2.initialize(parms, newestT)

@@ -410,10 +410,6 @@ def main(argv):
     
     # read in state
     state = State(parms._stateFile)
-    if state.isEmpty():
-        # error return here
-        return 0
-    #state.debugPrint()
     
     # query directory and get newest model run file, then
     # get all for that and previous issue time
