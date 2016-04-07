@@ -7,7 +7,43 @@ import logging
 import datetime
 import errno
 import WhfLog
+from ForcingEngineError import InvalidArgumentError
 
+#----------------------------------------------------------------------------
+def stringToBool(s):
+    """ Convert integer string (1 or 0) to boolean
+    Parameters
+    ----------
+    s : str
+       string, hopefully 1 or 0
+    Returns
+    -------
+    Boolean True if 1, False if 0
+    """
+    i = int(s)
+    if (i == 0):
+        return False
+    elif (i == 1):
+        return True
+    else
+        raise InvalidArgumentError(s)
+    
+#----------------------------------------------------------------------------
+def boolToInt(b):
+    """ Convert boolean to integer 1 or 0, just in case
+    Parameters
+    ----------
+    b : boolean
+       
+    Returns
+    -------
+    1 for True, 0 for False
+    """
+    if (b):
+        return 1
+    else:
+        return 0
+    
 #----------------------------------------------------------------------------
 def makeDirIfNeeded(path):
    """ Input is a to be a directory, make it if it does not exist.
@@ -334,6 +370,17 @@ class DataFile:
                     self._name, self._fileType,
                     self._time.debugString())
                       
+   def debugString(self):
+      """WhfLog.debug call with description of this data
+
+      Returns
+      -------
+         string
+
+      """
+      s = '%s,%s, %s, %s' %(self._yyyymmddDir,self._name, self._fileType, self._time.debugString())
+      return s
+                      
    def inRange(self, oldestT, newestT):
       """return true if the local _time is between input times
 
@@ -472,6 +519,11 @@ class DataFiles:
       self._fileType = fileType
       self._content = []  # no content in constructor
             
+   def printContent(self):
+      print "Content:"
+      for c in self._content:
+         print c.debugString()
+
    def setNewestFiles(self, hoursBack):
       """Set _content to files that are the most recent ones.
 
