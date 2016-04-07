@@ -65,6 +65,10 @@ RAP_data = /var/autofs/mnt/rapdmg1/data/grib/WRF-RR-CONUS-wrfprs
 GFS_data = /var/autofs/mnt/rapdmg1/data/grib/GFS_0.25-pgrb2/
 CFS_data = /d7/karsten/CFSv2/com/cfs/prod/cfs
 CFS_num_ensemble = 4
+MRMS_format = GaugeCorr_QPE_00.00_%%s_%%02d0000.grib2
+RAP_format = %%s_i%%02d_f%%03d_WRF-RR.grb2
+HRRR_format = %%s_i%%02d_f%%03d_HRRR.grb2
+GFS_format = %%s_i%%02d_f%%04d_GFS_0.25_pgrb2.grb2
 
 #-------------------------------------------------
 #   Forecast hour cutoff times
@@ -94,6 +98,7 @@ MRMS_hours_back = 5
 
 short_range_fcst_max_wait_minutes = 40
 short_range_fcst_very_late_minutes = 50
+analysis_assim_very_late_minutes = 50
 
 #
 # State files for regrid triggering

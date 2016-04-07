@@ -9,7 +9,12 @@ import sys
 import DataFiles as df
 from ConfigParser import SafeConfigParser
 from ForcingEngineError import SystemCommandError
+from ForcingEngineError import InvalidArgumentError
 import inspect
+
+# global var for which logging type is currently active
+WhfWhichChoices = ['RegridHRRR', 'RegridRAP', 'RegridMRMS', 'RegridGFS', 'ShortLayer', 'AaLayer', 'LongRegrid']
+WhfWhich = 'RegridHRRR'
 
 # global var always length 7  'Short   ', 'Medium ', 'Long   ', 'AA     '
 WhfConfigType = '      '
@@ -42,7 +47,7 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
     l.setLevel(level)
     l.addHandler(fileHandler)
 
-def init(parser, logFileName, configType, action, data):
+def init(parser, which, initAll):
     """Initialize log file using configFile content, and a log file name
 
     Parameters
@@ -82,12 +87,60 @@ def init(parser, logFileName, configType, action, data):
     if (not df.makeDirIfNeeded(logging_path)):
         raise SystemCommandError("Cannot create " + logging_path)
 
-    # we have two log files, one for python, one for ncl
-    logging_filename =  logging_path + "/" + logFileName + ".log" 
-    ncl_logging_filename =  logging_path + "/" + logFileName + ".ncl.log" 
-    setup_logger('main',  logging_filename, set_level)
-    setup_logger('ncl',  ncl_logging_filename, set_level)
+    # we have two log files, one for python, one for ncl, for each of the cases
+    # string 'RegridHRRR', 'RegridRAP', 'RegridMRMS', 'RegridGFS', 'ShortLayer', 'AaLayer', 'LongRegrid'
+    global WhfWhichChoices
+    for choice in WhfWhichChoices:
+        if (initAll):
+            logging_filename =  logging_path + "/" + choice + ".log" 
+            ncl_logging_filename =  logging_path + "/" + choice + ".ncl.log" 
+            setup_logger(choice + 'main',  logging_filename, set_level)
+            setup_logger(choice + 'ncl',  ncl_logging_filename, set_level)
+        else:
+            if (choice == which):
+                logging_filename =  logging_path + "/" + choice + ".log" 
+                ncl_logging_filename =  logging_path + "/" + choice + ".ncl.log" 
+                setup_logger(choice + 'main',  logging_filename, set_level)
+                setup_logger(choice + 'ncl',  ncl_logging_filename, set_level)
+    set(which)
     
+def set(which):
+    if which in WhfWhichChoices:
+        global WhfWhich
+        WhfWhich = which
+    else:
+        raise InvalidArgumentError("Unknown input " + which)
+    if (which == 'RegridHRRR'):
+        configType = 'Short'
+        action = 'Regrid'
+        data = 'HRRR'
+    elif (which == 'RegridRAP'):
+        configType = 'Short'
+        action = 'Regrid'
+        data = 'RAP'
+    elif (which == 'RegridMRMS'):
+        configType = 'AA'
+        action = 'Regrid'
+        data = 'MRMS'
+    elif (which == 'RegridGFS'):
+        configType = 'Medium'
+        action = 'Regrid'
+        data = 'GFS'
+    elif (which == 'ShortLayer'):
+        configType = 'Short'
+        action = 'Layer'
+        data = 'RAP/HRRR'
+    elif (which == 'AaLayer'):
+        configType = 'AA'
+        action = 'Layer'
+        data = 'RAP/HRRR/MRMS'
+    elif (which == 'LongRegrid'):
+        configType = 'Long'
+        action = 'Regrid'
+        data = 'CFS'
+    else:
+        raise InvalidArgumentError("Unknown input " + which)
+
     # set the global var's to inputs, padded to correct length
     #(so logging lines up nice)
     global WhfConfigType
@@ -101,7 +154,7 @@ def init(parser, logFileName, configType, action, data):
     global WhfData
     WhfData = data
     WhfData = WhfData.ljust(WhfDataLen)
-    
+
 def setConfigType(ctype):
     """  Set config type to input, padded to correct length
     Parameters
@@ -162,7 +215,8 @@ def debug(fmt, *argv):
        Arguments
     """
     formatStr = createFormatString('OK', fmt, 1)
-    log = logging.getLogger('main')
+    global WhfWhich
+    log = logging.getLogger(WhfWhich + 'main')
     log.debug(formatStr, *argv)
     
 def debug_ncl(fmt, *argv):
@@ -175,7 +229,8 @@ def debug_ncl(fmt, *argv):
        Arguments
     """
     formatStr = createFormatString('OK', fmt, 2)
-    log = logging.getLogger('ncl')
+    global WhfWhich
+    log = logging.getLogger(WhfWhich + 'ncl')
     log.debug(formatStr, *argv)
     
 def info(fmt, *argv):
@@ -188,7 +243,8 @@ def info(fmt, *argv):
        Arguments
     """
     formatStr = createFormatString('OK', fmt, 1)
-    log = logging.getLogger('main')
+    global WhfWhich
+    log = logging.getLogger(WhfWhich + 'main')
     log.info(formatStr, *argv)
     
 def warning(fmt, *argv):
@@ -201,7 +257,8 @@ def warning(fmt, *argv):
        Arguments
     """
     formatStr = createFormatString('WARNING', fmt, 1)
-    log = logging.getLogger('main')
+    global WhfWhich
+    log = logging.getLogger(WhfWhich + 'main')
     log.warning(formatStr, *argv)
     
 def error(fmt, *argv):
@@ -214,7 +271,8 @@ def error(fmt, *argv):
        Arguments
     """
     formatStr = createFormatString('ERROR', fmt, 1)
-    log = logging.getLogger('main')
+    global WhfWhich
+    log = logging.getLogger(WhfWhich + 'main')
     log.error(formatStr, *argv)
     
 def error_ncl(fmt, *argv):
@@ -227,7 +285,8 @@ def error_ncl(fmt, *argv):
        Arguments
     """
     formatStr = createFormatString('ERROR', fmt, 2)
-    log = logging.getLogger('ncl')
+    global WhfWhich
+    log = logging.getLogger(WhfWhich + 'ncl')
     log.error(formatStr, *argv)
     
 def critical(fmt, *argv):
@@ -240,6 +299,7 @@ def critical(fmt, *argv):
        Arguments
     """
     formatStr = createFormatString('CRITICL', fmt, 1)
-    log = logging.getLogger('main')
+    global WhfWhich
+    log = logging.getLogger(WhfWhich + 'main')
     log.critical(formatStr, *argv)
     

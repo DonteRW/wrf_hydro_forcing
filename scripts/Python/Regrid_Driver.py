@@ -25,7 +25,7 @@ from ForcingEngineError import SystemCommandError
 from ForcingEngineError import ZeroHourReplacementError
 
 #----------------------------------------------------------------------------
-def parmRead(fname, fileType):
+def parmRead(fname, fileType, realtime):
    """Read in the main config file, return needed parameters
 
    Parameters
@@ -34,6 +34,8 @@ def parmRead(fname, fileType):
       name of parameter file to read in
    fileType: str
       'RAP', 'HRRR', 'MRMS', 'GFS'
+   realtime: boolean
+      True if realtime, False for archive mode
 
    Returns
    -------
@@ -45,21 +47,11 @@ def parmRead(fname, fileType):
    parser = SafeConfigParser()
    parser.read(fname)
 
-   forcing_config_label = "Regrid" + fileType
-
-   if (fileType == 'HRRR'):
-      configType = 'Short'
-   elif (fileType == 'RAP'):
-      configType = 'Short'
-   elif (fileType == 'GFS'):
-      configType = 'Medium'
-   elif (fileType == 'MRMS'):
-      configType = 'AA'
+   label = 'Regrid' + fileType
+   if (realtime):
+      WhfLog.init(parser, label, False)
    else:
-      configType = '???'
-
-   WhfLog.init(parser, forcing_config_label, configType, 'Regrid', fileType)
-      
+      WhfLog.set(label)
    dataDir = parser.get('data_dir', fileType + '_data')
    maxFcstHour = int(parser.get('fcsthr_max', fileType + '_fcsthr_max'))
    hoursBack = int(parser.get('triggering', fileType + '_hours_back'))
@@ -74,11 +66,11 @@ def regridIfZeroHr(configFile, fileType, fname):
    Parameters
    ----------
    configFile : str
-   configuration file with all settings
+      configuration file with all settings
    fileType: str
-   HRRR, RAP, ... string
+      HRRR, RAP, ... string
    fname: str
-   name of file to regrid and downscale, with yyyymmdd parent dir
+      name of file to regrid and downscale, with yyyymmdd parent dir
 
    Returns
    -------
@@ -160,6 +152,7 @@ class Parms:
       Name of file with state information that is read/written
    """
 
+   #--------------------------------------------------------------------------
    def __init__(self, dataDir, maxFcstHour, hoursBack, stateFile):
       """Initialization using input args
 
@@ -172,6 +165,7 @@ class Parms:
       self._hoursBack = hoursBack
       self._stateFile = stateFile
 
+   #--------------------------------------------------------------------------
    def debugPrint(self):
       """ Debug logging of content
       """
@@ -196,6 +190,7 @@ class State:
       data file names with yyyymmdd parent directory
    """
 
+   #--------------------------------------------------------------------------
    def __init__(self, parmFile="", fileType=""):
       """Initialize using parameters read in from a file
 
@@ -216,6 +211,7 @@ class State:
          cf.read(parmFile)
          self._data = [name for name in cf.get("latest", fileType).split()]
 
+   #--------------------------------------------------------------------------
    def isEmpty(self):
       """Check if state is set or not
 
@@ -231,6 +227,7 @@ class State:
          return True
       return (not self._data)
 
+   #--------------------------------------------------------------------------
    def newest(self):
       """return newest file
 
@@ -244,16 +241,14 @@ class State:
          return ""
       return (self._data[-1])
       
-
-   def initialize(self, data, fileType):
+   #--------------------------------------------------------------------------
+   def initialize(self, data):
       """Initialize from DataFiles inputs
 
       Parameters
       ----------
       data: DataFiles
          data
-      fileType : str
-         'HRRR', etc
     
       Returns
       -------
@@ -262,33 +257,14 @@ class State:
       self._empty = False
       self._data = data.getFnames()
 
+   #--------------------------------------------------------------------------
    def debugPrint(self):
       """ logging debug of contents
       """
       for f in self._data:
          WhfLog.debug("State:%s", f)
         
-   def update(self, time, hoursBack, fileType):
-      """Update typed state so that input time is newest one
-
-       Parameters
-       ----------
-       time: ForecastTime
-          The newest time
-       hoursBack:
-          Maximum issue time hours back compared to time
-       fileType: str
-          'HRRR', ...
-       
-       Returns
-       -------
-       none
-       """
-      self._data = df.filterWithinNHours(self._data, fileType, time, hoursBack)
-      
-   def isNew(self, f):
-      return (not f in self._data)
-
+   #--------------------------------------------------------------------------
    def addFileIfNew(self, f):
       """ If input file is not in state, add it
 
@@ -309,6 +285,7 @@ class State:
           ret = True
       return ret
    
+   #--------------------------------------------------------------------------
    def sortFiles(self):
       """ Sort the files into ascending order for a type
 
@@ -321,6 +298,7 @@ class State:
       """
       self._data.sort()
 
+   #--------------------------------------------------------------------------
    def lookForNew(self, data, hoursBack, fileType):
       """ See if new data has arrived compared to state.
       If a new issue time, purge older stuff from state.
@@ -351,95 +329,13 @@ class State:
          if (not sname):
             WhfLog.error("Expected file, got none")
             return ret
-         if (fnames[-1] > sname):
-            WhfLog.debug("Newer time encountered")
-            # see if issue time has increased and if so, purge old stuff
-            # create DataFile objects, which requires breaking the full
-            # file into yymmdd/filename
-            sind = sname.find('/')
-            if (sind < 0):
-               raise FileNameMatchError('Cannot parse directory from ' + sname)
-            nind = fnames[-1].find('/')
-            if (sind < 0):
-               raise FileNameMatchError('Cannot parse directory from ' + fnames[-1])
-
-            symd = sname[:sind]
-            sfile = sname[sind+1:]
-            nymd = fnames[-1][:nind]
-            nfile = fnames[-1][nind+1:]
-            WhfLog.debug("Checking %s / %s  against %s / %s", symd, sfile, nymd, nfile)
-            try:
-               df0 = df.DataFile(symd, sfile, fileType)
-               df1 = df.DataFile(nymd, nfile, fileType)
-            except FilenameMatchError as fe:
-               WhfLog.debug("Cannot update due to %s", fe)
-            except InvalidArgumentError as ie:
-               WhfLog.debug("Cannot update due to %s", ie)
-
-            if (df0._time.inputIsNewerIssueHour(df1._time)):
-               WhfLog.debug("%s Issue hour has increased, purge now",
-                            fileType)
-               self.update(df1._time, hoursBack, fileType)
-
+         self._analyzeNewest(fnames[-1], sname, hoursBack, fileType)
       for f in fnames:
-         if (self.isNew(f)):
+         if (self._isNew(f)):
             ret.append(f)
       return ret
 
-
-   def updateWithNew(self, data, hoursBack, fileType):
-      """ Update internal state with new data
-
-      Parameters
-      ----------
-      data: DataFiles
-         The newest data
-      hoursBack: int
-         Maximum number of hours back to keep data in state
-      fileType : str
-         'HRRR', 'RAP', ...
-      Returns
-      -------
-      list[str]
-          The data file names that are are newly added to state
-      """
-         
-      ret = []
-      fnames = data.getFnames()
-      if (not fnames):
-         return ret
-
-      if (self.isEmpty()):
-         WhfLog.debug("Adding to empty list")
-      else:
-         sname = self.newest()
-         if (not sname):
-            WhfLog.error("Expected file, got none")
-            return ret
-         if (fnames[-1] > sname):
-            WhfLog.debug("Newer time encountered")
-            # see if issue time has increased and if so, purge old stuff
-            # create DataFile objects
-            try:
-               df0 = df.DataFile(sname[0:8], sname[9:], fileType)
-               df1 = df.DataFile(fnames[-1][0:8], fnames[-1][9:], fileType)
-            except FilenameMatchError as fe:
-               WhfLog.debug("Cannot update due to %s", fe)
-            except InvalidArgumentError as ie:
-               WhfLog.debug("Cannot update due to %s", ie)
-
-            if (df0._time.inputIsNewerIssueHour(df1._time)):
-               WhfLog.debug("%s Issue hour has increased, purge now",
-                            fileType)
-               self.update(df1._time, hoursBack, fileType)
-
-      for f in fnames:
-         if (self.addFileIfNew(f)):
-            ret.append(f)
-
-      self.sortFiles()
-      return ret
-        
+   #--------------------------------------------------------------------------
    def write(self, parmFile, fileType):
       """ Write state to param file
 
@@ -476,16 +372,72 @@ class State:
       with open(parmFile, 'wb') as configfile:
          config.write(configfile)
 
-#----------------------------------------------------------------------------
-def createStateFile(parms, fileType):
-   """  Called if there is no state file, look at data dirs and create state
+   #--------------------------------------------------------------------------
+   def _isNew(self, f):
+      return (not f in self._data)
 
+   #--------------------------------------------------------------------------
+   def _update(self, time, hoursBack, fileType):
+      """Update typed state so that input time is newest one
+
+       Parameters
+       ----------
+       time: ForecastTime
+          The newest time
+       hoursBack:
+          Maximum issue time hours back compared to time
+       fileType: str
+          'HRRR', ...
+       
+       Returns
+       -------
+       none
+       """
+      self._data = df.filterWithinNHours(self._data, fileType, time, hoursBack)
+      
+   #--------------------------------------------------------------------------
+   def _analyzeNewest(self, dataNewest, stateNewest, hoursBack, fileType):
+      if (dataNewest <= stateNewest):
+         return
+
+      # see if issue time has increased and if so, purge old stuff
+      # create DataFile objects, which requires breaking the full
+      # file into yymmdd/filename
+      sind = stateNewest.find('/')
+      if (sind < 0):
+         raise FileNameMatchError('Cannot parse directory from ' + stateNewest)
+      nind = dataNewest.find('/')
+      if (nind < 0):
+         raise FileNameMatchError('Cannot parse directory from ' + dataNewest)
+      symd = stateNewest[:sind]
+      sfile = stateNewest[sind+1:]
+      nymd = dataNewest[:nind]
+      nfile = dataNewest[nind+1:]
+      WhfLog.debug("Checking %s / %s  against %s / %s", symd, sfile, nymd, nfile)
+      try:
+         df0 = df.DataFile(symd, sfile, fileType)
+         df1 = df.DataFile(nymd, nfile, fileType)
+      except FilenameMatchError as fe:
+         WhfLog.debug("Cannot update due to %s", fe)
+      except InvalidArgumentError as ie:
+         WhfLog.debug("Cannot update due to %s", ie)
+
+      if (df0._time.inputIsNewerIssueHour(df1._time)):
+         WhfLog.debug("%s Issue hour has increased, purge now", fileType)
+         self._update(df1._time, hoursBack, fileType)
+
+#----------------------------------------------------------------------------
+def createStateFile(parms, fileType, realtime):
+   """  Called if there is no state file, look at data dirs and create state
+        in realtime, in non-realtime create an empty state.  Write to file.
    Parameters
    ----------
    parms: Parms
       Parameter settings
    fileType: str
       'HRRR', ...
+   realtime: boolean
+      True if realtime, False for archive mode
 
    Returns
    -------
@@ -495,86 +447,89 @@ def createStateFile(parms, fileType):
    """
 
    WhfLog.info("Initializing")
-
-
-   # query each directory and get newest model run file for each, then
-   # get all for that and previous issue time
-   data = df.DataFiles(parms._dataDir, parms._maxFcstHour, fileType)
-   data.setNewestFiles(parms._hoursBack)
-   for f in data._content:
-      f.debugPrint("Newest files: " + fileType)
-
    state = State("")
-   state.initialize(data, fileType)
 
-   # maybe back up  and regrid that entire issue time
-   # maybe redo this exact set of inputs only
-   # maybe do nothing
-   # maybe do all of them..for now do nothing as its easiest, just move on
+   if (realtime):
+
+      # query each directory and get newest model run file for each, then
+      # get all for that and previous issue time, this becomes state that
+      # is not re-processed, we only look for new stuff
+      data = df.DataFiles(parms._dataDir, parms._maxFcstHour, fileType)
+      data.setNewestFiles(parms._hoursBack)
+      for f in data._content:
+         f.debugPrint("Newest files: " + fileType)
+      state.initialize(data)
 
    # write out file (at least try to)
    state.write(parms._stateFile, fileType)
 
+#---------------------------------------------------------------------------
+def run(fileType, configFile, realtime):
+   """ Run the script, process any new data
+   Parameters
+   ----------
+   fileType: str
+      'HRRR', ...
+   configFile : str
+      Name of the file with settings
+   realtime : boolean
+      True if this is realtime
+   Returns
+   -------
+   1 for error, 0 for success
+   """   
+   good = False
+   regriddable = ['HRRR', 'RAP', 'MRMS', 'GFS']
+   if (fileType not in regriddable):
+      print 'ERROR unknown file type command arg ', fileType
+      return 1
+
+   # User must pass the config file into the main driver.
+   if not os.path.exists(configFile):
+      print 'ERROR forcing engine config file not found:', configFile
+      return 1
+
+   # read in fixed main params
+   parms = parmRead(configFile, fileType, realtime)
+
+   #if there is not a state file, create one now using newest
+   if (not os.path.exists(parms._stateFile)):
+      parms.debugPrint()
+      createStateFile(parms, fileType, realtime)
+        
+   # read in state
+   state = State(parms._stateFile, fileType)
+
+      # query each directory and get newest model run file for each, then
+   # get all for that and previous issue time
+   data = df.DataFiles(parms._dataDir, parms._maxFcstHour, fileType)
+   data.setNewestFiles(parms._hoursBack)
+
+   # Update the state to reflect changes, returning those files to regrid
+   # Regrid 'em
+   toProcess = state.lookForNew(data, parms._hoursBack, fileType)
+   for f in toProcess:
+      try:
+         regrid(f, fileType, configFile);
+      except:
+         WhfLog.error("Could not regrid/downscale %s", f)
+      else:
+         WhfLog.debug("Adding new file %s, and writing state file", f)
+         if (not state.addFileIfNew(f)):
+            WhfLog.error("File %s was not new", f)
+         else:
+            state.write(parms._stateFile, fileType);
+          
+   # write out state (in case it has not been written yet) and exit
+   #state.debugPrint()
+   state.write(parms._stateFile, fileType)
+   return 0
+
 #----------------------------------------------------------------------------
 def main(argv):
-
-    fileType = argv[0]
-    good = False
-    if (fileType == 'HRRR' or fileType == 'RAP' or fileType == 'MRMS' or
-        fileType == 'GFS'):
-       good = True
-    if (not good):
-       print 'ERROR unknown file type command arg ', fileType
-       return 1
-
-    # User must pass the config file into the main driver.
-    configFile = argv[1]
-    if not os.path.exists(configFile):
-        print 'ERROR forcing engine config file not found:', configFile
-        return 1
-    
-    # read in fixed main params
-    parms = parmRead(configFile, fileType)
-
-    #parms.debugPrint()
-
-    #if there is not a state file, create one now using newest
-    if (not os.path.exists(parms._stateFile)):
-        parms.debugPrint()
-        createStateFile(parms, fileType)
-        
-    # begin normal processing situation
-    #WhfLog.debug("....Check for new input data to regid")
-    
-    # read in state
-    state = State(parms._stateFile, fileType)
-    
-    # query each directory and get newest model run file for each, then
-    # get all for that and previous issue time
-    data = df.DataFiles(parms._dataDir, parms._maxFcstHour, fileType)
-    data.setNewestFiles(parms._hoursBack)
-
-    # Update the state to reflect changes, returning those files to regrid
-    # Regrid 'em
-    toProcess = state.lookForNew(data, parms._hoursBack, fileType)
-    for f in toProcess:
-       try:
-          regrid(f, fileType, configFile);
-       except:
-          WhfLog.error("Could not regrid/downscale %s", f)
-       else:
-          WhfLog.debug("Adding new file %s, and writing state file", f)
-          if (not state.addFileIfNew(f)):
-             WhfLog.error("File %s was not new", f)
-          else:
-             state.write(parms._stateFile, fileType);
-          
-    # write out state (in case it has not been written yet) and exit
-    #state.debugPrint()
-    state.write(parms._stateFile, fileType)
-    return 0
+   return run(argv[0], argv[1], True)
 
 #----------------------------------------------
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+   main(sys.argv[1:])
