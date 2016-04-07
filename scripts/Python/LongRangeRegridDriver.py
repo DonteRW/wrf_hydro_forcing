@@ -20,7 +20,7 @@ from ForcingEngineError import FilenameMatchError
 from ForcingEngineError import InvalidArgumentError
 
 #----------------------------------------------------------------------------
-def parmRead(fname):
+def parmRead(fname, realtime):
    """Read in the main config file, return needed parameters
 
    Parameters
@@ -37,15 +37,15 @@ def parmRead(fname):
    parser = SafeConfigParser()
    parser.read(fname)
 
-   forcing_config_label = "LongRangeRegridDriver"
-   WhfLog.init(parser, forcing_config_label, 'Long', 'Regrid', 'CFS')
-    
+   if (realtime):
+       WhfLog.init(parser, 'LongRegrid', False)
+   else:
+       WhfLog.set('LongRegrid')
    cfsDir = parser.get('data_dir', 'CFS_data')
    cfsNumEnsemble = int(parser.get('data_dir', 'CFS_num_ensemble'))
    maxFcstHourCfs = int(parser.get('fcsthr_max', 'CFS_fcsthr_max'))
    hoursBackCfs = int(parser.get('triggering', 'CFS_hours_back'))
    stateFile = parser.get('triggering', 'long_range_regrid_state_file')
-    
    parms = Parms(cfsDir, cfsNumEnsemble, maxFcstHourCfs, hoursBackCfs,
                  stateFile)
    return parms
@@ -132,6 +132,7 @@ class State:
       CFS file names with yyyymmdd parent directory
    """
 
+   #--------------------------------------------------------------------------
    def __init__(self, parmFile):
       """Initialize using parameters read in from a file
 
@@ -150,6 +151,7 @@ class State:
          cf.read(parmFile)
          self._cfs = [name for name in cf.get("latest", "cfs").split()]
 
+   #--------------------------------------------------------------------------
    def isEmpty(self):
       """Check if state is set or not
 
@@ -163,6 +165,7 @@ class State:
       """
       return self._empty
 
+   #--------------------------------------------------------------------------
    def newest(self):
       """return newest file
 
@@ -179,7 +182,7 @@ class State:
          return ""
       return (self._cfs[-1])
       
-
+   #--------------------------------------------------------------------------
    def initialize(self, cfs):
       """Initialize from DataFiles inputs
 
@@ -195,12 +198,14 @@ class State:
       self._empty = False
       self._cfs = cfs.getFnames()
 
+   #--------------------------------------------------------------------------
    def debugPrint(self):
       """ logging debug of contents
       """
       for f in self._cfs:
          WhfLog.debug("State:CFS:%s", f)
         
+   #--------------------------------------------------------------------------
    def update(self, time, hoursBack):
       """Update state so that input time is newest one
 
@@ -217,6 +222,7 @@ class State:
        """
       self._cfs = df.filterWithinNHours(self._cfs, 'CFS', time, hoursBack)
       
+   #--------------------------------------------------------------------------
    def addFileIfNew(self, f):
       """ If input file is not in state, add it
 
@@ -237,6 +243,7 @@ class State:
          ret = True
       return ret
    
+   #--------------------------------------------------------------------------
    def sortFiles(self):
       """ Sort the files into ascending order for a type
 
@@ -252,7 +259,7 @@ class State:
       """
       self._cfs.sort()
 
-
+   #--------------------------------------------------------------------------
    def updateWithNew(self, data, hoursBack):
       """ Update internal state with new data
 
@@ -306,6 +313,7 @@ class State:
       self.sortFiles()
       return ret
         
+   #--------------------------------------------------------------------------
    def write(self, parmFile):
       """ Write state to param file
 
@@ -342,7 +350,7 @@ class State:
 
 
 #----------------------------------------------------------------------------
-def createStateFile(parms):
+def createStateFile(parms, realtime):
    """  Called if there is no state file, look at data dirs and create state
 
    Parameters
@@ -358,62 +366,41 @@ def createStateFile(parms):
    """
 
    WhfLog.info("Initializing")
-
-
-   # query directory and get newest model run file, then
-   # get all for that and previous issue time
-   cfs = df.DataFiles(parms._cfsDir, parms._maxFcstHourCfs, "CFS")
-   cfs.setNewestFiles(parms._hoursBackCfs)
-   for f in cfs._content:
-      f.debugPrint("Newest files: CFS")
-    
    state = State("")
-   state.initialize(cfs)
 
-   # maybe back up  and regrid that entire issue time
-   # maybe redo this exact set of inputs only
-   # maybe do nothing
-   # maybe do all of them..for now do nothing as its easiest, just move on
-   #files = hrrr.getFnames()
-   #for f in files:
-   #  regridHRRR(f)
-   #files = rap.getFnames()
-   #for f in files:
-   #    regridRAP(f)
-   #files = mrms.getFnames()
-   #for f in files:
-   #    regridMRMS(f)
+
+   if (realtime):
+      # query directory and get newest model run file, then
+      # get all for that and previous issue time
+      cfs = df.DataFiles(parms._cfsDir, parms._maxFcstHourCfs, "CFS")
+      cfs.setNewestFiles(parms._hoursBackCfs)
+      for f in cfs._content:
+         f.debugPrint("Newest files: CFS")
+      state.initialize(cfs)
 
    # write out file
    state.write(parms._stateFile)
 
 #----------------------------------------------------------------------------
-def main(argv):
-
-    # User must pass the config file into the main driver.
-    configFile = argv[0]
+def run(configFile, realtime):
     if not os.path.exists(configFile):
         print 'ERROR forcing engine config file not found.'
         return 1
 
     # read in fixed main params
-    parms = parmRead(configFile)
+    parms = parmRead(configFile, realtime)
     #parms.debugPrint()
 
     #if there is not a state file, create one now using newest
     if (not os.path.exists(parms._stateFile)):
         parms.debugPrint()
-        createStateFile(parms)
+        createStateFile(parms, realtime)
         
     # begin normal processing situation
     WhfLog.debug("....Check for new input data to regid")
     
     # read in state
     state = State(parms._stateFile)
-    if state.isEmpty():
-        # error return here
-        return 0
-    #state.debugPrint()
     
     # query directory and get newest model run file, then
     # get all for that and previous issue time
@@ -429,6 +416,10 @@ def main(argv):
     #state.debugPrint()
     state.write(parms._stateFile)
     return 0
+
+#----------------------------------------------------------------------------
+def main(argv):
+    return run(argv[0], True)
 
 #----------------------------------------------
 
